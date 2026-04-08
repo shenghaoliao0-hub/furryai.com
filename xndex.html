@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LSP端口</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        #snowCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .header {
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        .icon-placeholder {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+        }
+        .info-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .info-item:last-child {
+            margin-bottom: 0;
+        }
+        .scroll-view {
+            height: 200px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .server-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            text-align: left;
+        }
+        .server-item:last-child {
+            margin-bottom: 0;
+        }
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        .btn-refresh {
+            background: linear-gradient(45deg, #00b894, #00a085);
+        }
+        .btn-detect {
+            background: linear-gradient(45deg, #0984e3, #074b83);
+        }
+        /* 弹窗样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .modal-btn-confirm {
+            background: linear-gradient(45deg, #00b894, #00a085);
+            color: white;
+        }
+        .modal-btn-block {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="snowCanvas"></canvas>
+    <div class="container">
+        <div class="header">
+            <h1>LSP端口</h1>
+            <div class="icon-placeholder">
+                <span>图标</span>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <div class="info-item">
+                <span>IP地址:</span>
+                <span id="ip-address">192.143.07</span>
+            </div>
+            <div class="info-item">
+                <span>在线人数:</span>
+                <span id="online-count">1</span>
+            </div>
+            <div class="info-item">
+                <span>端口:</span>
+                <span>8080</span>
+            </div>
+            <div class="info-item">
+                <span>时间:</span>
+                <span id="current-time">加载中...</span>
+            </div>
+        </div>
+        
+        <div class="scroll-view" id="server-list">
+            <div class="server-item">
+                <strong>服务器状态</strong>: 运行中<br>
+                <strong>人数</strong>: 1/100<br>
+                <strong>延迟</strong>: 10ms
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button class="btn" id="btn-reconnect">重新连接</button>
+            <button class="btn btn-refresh" id="btn-refresh">刷新服务器</button>
+            <button class="btn btn-detect" id="btn-detect">检测攻击</button>
+        </div>
+    </div>
+
+    <!-- 防CA检测弹窗 -->
+    <div id="caModal" class="modal">
+        <div class="modal-content">
+            <h3 id="caModalTitle">防CA检测</h3>
+            <p id="caModalMessage"></p>
+            <div class="modal-buttons" id="caModalButtons">
+                <button class="modal-btn modal-btn-confirm" id="caModalConfirm">确定</button>
+                <button class="modal-btn modal-btn-block" id="caModalBlock" style="display: none;">拦截</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 雪花效果
+        const canvas = document.getElementById('snowCanvas');
+        const ctx = canvas.getContext('2d');
+        let snowflakes = [];
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        function createSnowflake() {
+            return {
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 3 + 1,
+                speed: Math.random() * 3 + 1,
+                wind: Math.random() * 0.5 - 0.25
+            };
+        }
+        
+        function drawSnowflakes() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            
+            for (let i = 0; i < snowflakes.length; i++) {
+                const flake = snowflakes[i];
+                ctx.beginPath();
+                ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                flake.y += flake.speed;
+                flake.x += flake.wind;
+                
+                if (flake.y > canvas.height) {
+                    snowflakes[i] = createSnowflake();
+                    snowflakes[i].y = 0;
+                }
+            }
+        }
+        
+        function initSnow() {
+            resizeCanvas();
+            for (let i = 0; i < 100; i++) {
+                snowflakes.push(createSnowflake());
+            }
+            setInterval(drawSnowflakes, 50);
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        
+        // 时间显示
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.getFullYear() + '-' + 
+                           String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                           String(now.getDate()).padStart(2, '0') + ' ' + 
+                           String(now.getHours()).padStart(2, '0') + ':' + 
+                           String(now.getMinutes()).padStart(2, '0') + ':' + 
+                           String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('current-time').textContent = timeStr;
+        }
+        
+        setInterval(updateTime, 1000);
+        updateTime();
+        
+        // 按钮功能
+        document.getElementById('btn-reconnect').addEventListener('click', function() {
+            alert('正在重新连接...\nfunction a()
+gg.clearResults()
+gg.setRanges(16384)
+gg.searchNumber("16384", 4, false
+gg.searchNumber("16384", 4, false
+gg.getResults(9999)
+gg.editAll("0"，
+4)
+gg.alert("过检完毕")
+end防封代码...\n连接成功！');
+        });
+        
+        document.getElementById('btn-refresh').addEventListener('click', function() {
+            alert('服务器已刷新！\n在线人数: 1');
+        });
+        
+        // 防CA功能
+        const caModal = document.getElementById('caModal');
+        const caModalMessage = document.getElementById('caModalMessage');
+        const caModalTitle = document.getElementById('caModalTitle');
+        const caModalConfirm = document.getElementById('caModalConfirm');
+        const caModalBlock = document.getElementById('caModalBlock');
+        
+        document.getElementById('btn-detect').addEventListener('click', function() {
+            // 随机决定是否检测到攻击 (30%概率检测到攻击)
+            const hasAttack = Math.random() < 0.3;
+            const packetCount = Math.floor(Math.random() * 10) + 1;
+            
+            if (hasAttack) {
+                caModalTitle.textContent = '检测到攻击!';
+                caModalMessage.textContent =                caModalMessage.textContent = `已抓取${packetCount}个恶意数据包`;
+                caModalBlock.style.display = 'inline-block';
+            } else {
+                caModalTitle.textContent = '安全检测';
+                caModalMessage.textContent = '服务器未被攻击，祝你稳定奔放';
+                caModalBlock.style.display = 'none';
+            }
+            
+            caModal.style.display = 'flex';
+        });
+        
+        caModalConfirm.addEventListener('click', function() {
+            caModal.style.display = 'none';
+        });
+        
+        caModalBlock.addEventListener('click', function() {
+            // 随机决定拦截是否成功 (80%成功率)
+            const success = Math.random() < 0.8;
+            const packetCount = parseInt(caModalMessage.textContent.match(/\d+/)[0]);
+            
+            if (success) {
+                caModalMessage.textContent = `正在拦截...\n已清理${packetCount}个恶意数据包`;
+                setTimeout(() => {
+                    caModalMessage.textContent = `拦截成功！已清理${packetCount}个恶意数据包`;
+                    caModalBlock.style.display = 'none';
+                }, 1500);
+            } else {
+                caModalMessage.textContent = '正在拦截...\n拦截失败，请点击确定';
+                setTimeout(() => {
+                    caModalBlock.style.display = 'none';
+                }, 1500);
+            }
+        });
+        
+        // 初始化
+        initSnow();
+    </script>
+</body>
+</html>
+
