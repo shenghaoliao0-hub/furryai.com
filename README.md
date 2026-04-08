@@ -1,1 +1,1 @@
-furryqingyunai.com
+qingyunai.com
